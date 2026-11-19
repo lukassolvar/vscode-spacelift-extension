@@ -1,8 +1,8 @@
-# Stacks for Spacelift
+# Stacks for Spacelift (Unofficial)
 
 Browse your [Spacelift](https://spacelift.io) stacks and runs, read plan and apply logs, and approve or discard runs without leaving VS Code.
 
-> **Unofficial.** This extension is not affiliated with or endorsed by Spacelift, Inc.
+> **Unofficial community project.** Not affiliated with, endorsed by, or supported by Spacelift, Inc. See [Disclaimer](#disclaimer).
 
 ![Run details panel](media/run-panel.png)
 
@@ -61,6 +61,10 @@ npm run build     # compile to out/
 ```
 
 Press F5 in VS Code to start an Extension Development Host. `npm run package` builds a `.vsix` you can install with `code --install-extension <file>`.
+
+## Disclaimer
+
+Spacelift is a product of Spacelift, Inc. This project is independent. It uses the name only to describe the service it works with, and it contains no Spacelift logos or branding. It talks to your Spacelift account through the same API and credentials you already have, and it is provided as is, without warranty. You are responsible for following the terms of your own Spacelift agreement.
 
 ## License
 

@@ -1,7 +1,8 @@
 node_modules
 src
 .vscode
-media
+media/*
+!media/icon.png
 .gitignore
 tsconfig.json
 **/*.test.ts

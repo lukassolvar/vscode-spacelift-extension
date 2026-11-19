@@ -1,6 +1,7 @@
 {
   "name": "spacelift-vscode",
-  "displayName": "Stacks for Spacelift",
+  "displayName": "Stacks for Spacelift (Unofficial)",
+  "icon": "media/icon.png",
   "description": "Unofficial. Browse Spacelift stacks and runs, read plan and apply logs, and approve or discard runs from VS Code.",
   "version": "0.1.0",
   "publisher": "lukassolvar",
@@ -24,7 +25,7 @@
   },
   "contributes": {
     "viewsContainers": {
-      "activitybar": [{ "id": "spacelift", "title": "Spacelift", "icon": "$(rocket)" }]
+      "activitybar": [{ "id": "spacelift", "title": "Spacelift", "icon": "$(layers)" }]
     },
     "views": {
       "spacelift": [{ "id": "spacelift.stacks", "name": "Stacks" }]
