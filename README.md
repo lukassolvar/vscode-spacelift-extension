@@ -82,6 +82,17 @@ npm run build     # compile to out/
 
 Press F5 in VS Code to start an Extension Development Host. `npm run package` builds a `.vsix` you can install with `code --install-extension <file>`.
 
+### Releasing
+
+CI runs the tests on Linux, macOS and Windows with Node 22 and 24, checks that the package contains only the expected files, and audits dependencies every week.
+
+To release:
+
+1. Set the new `version` in `package.json`, and rename `[Unreleased]` in `CHANGELOG.md` to that version and date.
+2. Merge to `main`, then tag and push: `git tag vX.Y.Z && git push origin vX.Y.Z`.
+
+The Release workflow runs the tests, packages the extension, creates a GitHub release with the `.vsix` attached, and publishes to the VS Code Marketplace and Open VSX. Publishing needs the secrets `VSCE_PAT` (an Azure DevOps token with the Marketplace "Manage" scope) and `OVSX_PAT` (an Open VSX token), set on a `release` environment in the repository settings. A registry whose token is missing is skipped. Start the workflow manually to rehearse everything except publishing.
+
 ## Disclaimer
 
 Spacelift is a product of Spacelift, Inc. This project is independent. It uses the name only to describe the service it works with, and it contains no Spacelift logos or branding. It talks to your Spacelift account through the same API and credentials you already have, and it is provided as is, without warranty. You are responsible for following the terms of your own Spacelift agreement.

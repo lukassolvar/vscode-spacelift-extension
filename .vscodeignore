@@ -1,8 +1,11 @@
 node_modules
 src
 test
+scripts
 coverage
 .vscode
+.github
+.gitattributes
 media/*
 !media/icon.png
 .gitignore
