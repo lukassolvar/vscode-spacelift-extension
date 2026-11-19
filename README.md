@@ -13,17 +13,31 @@ Browse your [Spacelift](https://spacelift.io) stacks and runs, read plan and app
 - **Run details** panel: status, commit, trigger, Terraform version and change counts, a step-by-step timeline (queued, planning, applying, ...), and the log of each step with colored errors, warnings and plan diffs.
 - **Changes tab** listing every resource the run adds, changes, replaces or deletes.
 - **Approve and Discard** for runs waiting for confirmation, from the panel or the run's context menu.
+- **Approve and Reject reviews** for runs that need sign-off from an approval policy, including proposed (pull request) runs in `PENDING_REVIEW`. Proposed runs only appear in the tree while they await review.
 - Logs and status refresh automatically while a run is in progress.
 
 ## Requirements
 
 - VS Code 1.100 or newer.
-- [`spacectl`](https://github.com/spacelift-io/spacectl), the Spacelift CLI. On macOS: `brew install spacelift-io/spacelift/spacectl`.
+- [`spacectl`](https://github.com/spacelift-io/spacectl), the Spacelift CLI (see below).
 - A Spacelift account. The extension acts with your permissions, so you can only see and approve what Spacelift lets you.
+
+### Installing spacectl
+
+| OS | How |
+| --- | --- |
+| macOS | `brew install spacelift-io/spacelift/spacectl` |
+| Windows | `winget install --id spacelift-io.spacectl`, or download the binary from the [releases page](https://github.com/spacelift-io/spacectl/releases) |
+| Linux | Homebrew (same command as macOS), asdf, or download the binary from the [releases page](https://github.com/spacelift-io/spacectl/releases). Community packages exist for Arch (`yay -S spacectl-bin`) and Alpine (`apk add spacectl --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing`). Review community packages before installing. |
+
+The setup flow below offers to run the install command on macOS and Windows, and opens the install guide on Linux.
+
+- **Windows:** restart VS Code after installing so it picks up the updated `PATH`. If you point `spacelift.spacectlPath` at the binary yourself, use the `.exe`. The extension starts it directly, without a shell, so `.cmd` or `.bat` wrappers do not work.
+- **Linux and macOS:** if `spacectl` is installed but VS Code cannot find it (common when VS Code is launched from a desktop launcher with a minimal `PATH`), set `spacelift.spacectlPath` to the full path, for example `/home/you/.local/bin/spacectl`.
 
 ## Getting started
 
-1. Open the Spacelift icon in the activity bar and click **Set Up** (or run **Spacelift: Set Up** from the Command Palette).
+1. Open the layers icon in the activity bar and click **Set Up** (or run **Spacelift (Unofficial): Set Up** from the Command Palette).
 2. Enter your account URL, for example `https://acme.app.spacelift.io`.
 3. Click **Sign In**. Your browser opens to finish the login through `spacectl`.
 
@@ -43,12 +57,15 @@ Both are user-level settings. Workspace settings cannot override them (see Secur
 - The extension does not store credentials. It asks `spacectl profile export-token` for a short-lived token, keeps it in memory, and sends it only to your configured `https://` endpoint.
 - `spacelift.endpoint` and `spacelift.spacectlPath` use VS Code's machine scope, so a repository you open cannot redirect your token or choose which program runs.
 - No telemetry. The only network traffic is to your Spacelift account.
+- Log text, run titles and commit messages are escaped before display, and the run panel uses a strict Content Security Policy.
+
+To report a vulnerability, see [SECURITY.md](SECURITY.md).
 - Approve and Discard act immediately and do not ask for confirmation, matching the Spacelift web app.
 
 ## Known limitations
 
 - Spacelift deletes run logs after your account's retention period. Older runs show a note instead of logs.
-- Runs waiting on a policy review (`PENDING_REVIEW`) cannot be approved from the extension yet.
+- Reviews are submitted with Spacelift's `runReview` API. Whether you are allowed to review a run is decided by Spacelift and your role, so a refused review shows Spacelift's message.
 - The Changes tab needs a Terraform, OpenTofu or Terragrunt stack.
 - The extension runs locally, not in remote or virtual workspaces, because it relies on your local `spacectl` login.
 
@@ -57,6 +74,7 @@ Both are user-level settings. Workspace settings cannot override them (see Secur
 ```sh
 npm install
 npm test          # unit tests (vitest)
+npm run coverage  # tests with a coverage report in coverage/
 npm run build     # compile to out/
 ```
 
