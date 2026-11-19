@@ -11,6 +11,7 @@ const run: RunData = {
   triggeredBy: "vcs/commit",
   createdAt: 1790000000,
   canConfirm: true,
+  needsApproval: false,
   commit: { hash: "d2e6c30a2d61", authorName: "A", message: "m", url: "javascript:alert(1)", timestamp: 1790000000 },
   delta: { addCount: 1, changeCount: 2, deleteCount: 3 },
   history: [],
@@ -31,6 +32,25 @@ describe("headerHtml", () => {
     const finished = headerHtml(stack, { ...run, state: "FINISHED", canConfirm: false });
     expect(finished).not.toContain('data-cmd="confirm"');
     expect(finished).not.toContain('data-cmd="discard"');
+  });
+});
+
+describe("headerHtml review actions", () => {
+  it("offers approve and reject reviews instead of confirm for a run pending review", () => {
+    const html = headerHtml(stack, { ...run, state: "PENDING_REVIEW", canConfirm: false, needsApproval: true });
+
+    expect(html).toContain('data-cmd="approve"');
+    expect(html).toContain('data-cmd="reject"');
+    expect(html).not.toContain('data-cmd="confirm"');
+    expect(html).not.toContain('data-cmd="discard"');
+  });
+
+  it("keeps discard available while an unconfirmed run waits for reviews", () => {
+    const html = headerHtml(stack, { ...run, canConfirm: false, needsApproval: true });
+
+    expect(html).toContain('data-cmd="approve"');
+    expect(html).toContain('data-cmd="discard"');
+    expect(html).not.toContain('data-cmd="confirm"');
   });
 });
 

@@ -1,4 +1,5 @@
 import { esc } from "./logRender";
+import { availableActions } from "./runs";
 
 export interface Transition {
   state: string;
@@ -18,6 +19,7 @@ export interface RunData {
   triggeredBy: string | null;
   createdAt: number;
   canConfirm: boolean;
+  needsApproval: boolean;
   commit: { hash: string; authorName: string; message: string; url: string; timestamp: number };
   delta: { addCount: number; changeCount: number; deleteCount: number } | null;
   history: Transition[];
@@ -116,9 +118,12 @@ export function headerHtml(stack: StackData, run: RunData, now = Date.now() / 10
     `Started ${esc(date(run.createdAt))}`,
     esc(stateLabel(run.type)),
   ].filter(Boolean);
+  const can = availableActions(run);
   const actions = [
-    run.canConfirm && '<button class="primary" data-cmd="confirm">Approve</button>',
-    run.state === "UNCONFIRMED" && '<button data-cmd="discard">Discard</button>',
+    can.review && '<button class="primary" data-cmd="approve">Approve</button>',
+    can.review && '<button data-cmd="reject">Reject</button>',
+    can.confirm && '<button class="primary" data-cmd="confirm">Approve</button>',
+    can.discard && '<button data-cmd="discard">Discard</button>',
     '<button data-cmd="refresh" title="Reload this run">↻ Refresh</button>',
   ].filter(Boolean).join("");
   return `<div class="crumb">${esc(stack.name)}</div>
@@ -244,7 +249,7 @@ export function pageHtml(nonce: string): string {
     const t = e.target.closest('[data-cmd]');
     if (!t) return;
     if (t.dataset.cmd === 'tab') return showTab(t.dataset.value);
-    if (['refresh', 'confirm', 'discard'].includes(t.dataset.cmd)) document.body.classList.add('busy');
+    if (['refresh', 'confirm', 'discard', 'approve', 'reject'].includes(t.dataset.cmd)) document.body.classList.add('busy');
     vscode.postMessage({ cmd: t.dataset.cmd, value: t.dataset.value });
   });
   vscode.postMessage({ cmd: 'ready' });

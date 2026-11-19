@@ -6,29 +6,64 @@
   "version": "0.1.0",
   "publisher": "lukassolvar",
   "license": "MIT",
-  "repository": { "type": "git", "url": "https://github.com/lukassolvar/vscode-spacelift-extension.git" },
-  "bugs": { "url": "https://github.com/lukassolvar/vscode-spacelift-extension/issues" },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lukassolvar/vscode-spacelift-extension.git"
+  },
+  "bugs": {
+    "url": "https://github.com/lukassolvar/vscode-spacelift-extension/issues"
+  },
   "homepage": "https://github.com/lukassolvar/vscode-spacelift-extension#readme",
-  "categories": ["Other"],
-  "keywords": ["spacelift", "terraform", "opentofu", "infrastructure as code", "devops", "iac"],
-  "engines": { "vscode": "^1.100.0" },
-  "extensionKind": ["ui"],
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "spacelift",
+    "terraform",
+    "opentofu",
+    "infrastructure as code",
+    "devops",
+    "iac"
+  ],
+  "engines": {
+    "vscode": "^1.100.0"
+  },
+  "extensionKind": [
+    "ui"
+  ],
   "capabilities": {
-    "untrustedWorkspaces": { "supported": true },
-    "virtualWorkspaces": { "supported": false, "description": "Needs the local spacectl binary." }
+    "untrustedWorkspaces": {
+      "supported": true
+    },
+    "virtualWorkspaces": {
+      "supported": false,
+      "description": "Needs the local spacectl binary."
+    }
   },
   "main": "./out/extension.js",
   "scripts": {
     "build": "tsc -p .",
     "test": "vitest run",
-    "package": "npm run build && vsce package"
+    "package": "npm run build && vsce package",
+    "coverage": "vitest run --coverage"
   },
   "contributes": {
     "viewsContainers": {
-      "activitybar": [{ "id": "spacelift", "title": "Spacelift", "icon": "$(layers)" }]
+      "activitybar": [
+        {
+          "id": "spacelift",
+          "title": "Spacelift (Unofficial)",
+          "icon": "$(layers)"
+        }
+      ]
     },
     "views": {
-      "spacelift": [{ "id": "spacelift.stacks", "name": "Stacks" }]
+      "spacelift": [
+        {
+          "id": "spacelift.stacks",
+          "name": "Stacks"
+        }
+      ]
     },
     "viewsWelcome": [
       {
@@ -55,54 +90,208 @@
       }
     },
     "commands": [
-      { "command": "spacelift.setup", "title": "Set Up", "category": "Spacelift" },
-      { "command": "spacelift.filterAll", "title": "All stacks", "category": "Spacelift", "toggled": "!spacelift.filter" },
-      { "command": "spacelift.filterApproval", "title": "Needs approval", "category": "Spacelift", "toggled": "spacelift.filter == unconfirmed" },
-      { "command": "spacelift.filterFailed", "title": "Failed", "category": "Spacelift", "toggled": "spacelift.filter == failed" },
-      { "command": "spacelift.filter", "title": "Custom filter…", "category": "Spacelift" },
-      { "command": "spacelift.sortName", "title": "Name", "category": "Spacelift", "toggled": "spacelift.sort == name" },
-      { "command": "spacelift.sortAttention", "title": "Needs attention first", "category": "Spacelift", "toggled": "spacelift.sort == attention" },
-      { "command": "spacelift.sortRecent", "title": "Recently changed", "category": "Spacelift", "toggled": "spacelift.sort == recent" },
-      { "command": "spacelift.refresh", "title": "Refresh", "category": "Spacelift", "icon": "$(refresh)" },
-      { "command": "spacelift.openRun", "title": "Open Run", "category": "Spacelift" },
-      { "command": "spacelift.confirm", "title": "Approve", "category": "Spacelift", "icon": "$(check)" },
-      { "command": "spacelift.discard", "title": "Discard", "category": "Spacelift", "icon": "$(close)" }
+      {
+        "command": "spacelift.setup",
+        "title": "Set Up",
+        "category": "Spacelift (Unofficial)"
+      },
+      {
+        "command": "spacelift.filterAll",
+        "title": "All stacks",
+        "category": "Spacelift (Unofficial)",
+        "toggled": "!spacelift.filter"
+      },
+      {
+        "command": "spacelift.filterApproval",
+        "title": "Needs approval",
+        "category": "Spacelift (Unofficial)",
+        "toggled": "spacelift.filter == needs-approval"
+      },
+      {
+        "command": "spacelift.filterFailed",
+        "title": "Failed",
+        "category": "Spacelift (Unofficial)",
+        "toggled": "spacelift.filter == failed"
+      },
+      {
+        "command": "spacelift.filter",
+        "title": "Custom filter…",
+        "category": "Spacelift (Unofficial)"
+      },
+      {
+        "command": "spacelift.sortName",
+        "title": "Name",
+        "category": "Spacelift (Unofficial)",
+        "toggled": "spacelift.sort == name"
+      },
+      {
+        "command": "spacelift.sortAttention",
+        "title": "Needs attention first",
+        "category": "Spacelift (Unofficial)",
+        "toggled": "spacelift.sort == attention"
+      },
+      {
+        "command": "spacelift.sortRecent",
+        "title": "Recently changed",
+        "category": "Spacelift (Unofficial)",
+        "toggled": "spacelift.sort == recent"
+      },
+      {
+        "command": "spacelift.refresh",
+        "title": "Refresh",
+        "category": "Spacelift (Unofficial)",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "spacelift.openRun",
+        "title": "Open Run",
+        "category": "Spacelift (Unofficial)"
+      },
+      {
+        "command": "spacelift.confirm",
+        "title": "Approve",
+        "category": "Spacelift (Unofficial)",
+        "icon": "$(check)"
+      },
+      {
+        "command": "spacelift.discard",
+        "title": "Discard",
+        "category": "Spacelift (Unofficial)",
+        "icon": "$(close)"
+      },
+      {
+        "command": "spacelift.approve",
+        "title": "Approve Review",
+        "category": "Spacelift (Unofficial)",
+        "icon": "$(check)"
+      },
+      {
+        "command": "spacelift.reject",
+        "title": "Reject Review",
+        "category": "Spacelift (Unofficial)",
+        "icon": "$(close)"
+      }
     ],
     "submenus": [
-      { "id": "spacelift.filterMenu", "label": "Filter", "icon": "$(filter)" },
-      { "id": "spacelift.sortMenu", "label": "Sort", "icon": "$(list-ordered)" }
+      {
+        "id": "spacelift.filterMenu",
+        "label": "Filter",
+        "icon": "$(filter)"
+      },
+      {
+        "id": "spacelift.sortMenu",
+        "label": "Sort",
+        "icon": "$(list-ordered)"
+      }
     ],
     "menus": {
       "view/title": [
-        { "submenu": "spacelift.filterMenu", "when": "view == spacelift.stacks", "group": "navigation@1" },
-        { "submenu": "spacelift.sortMenu", "when": "view == spacelift.stacks", "group": "navigation@2" },
-        { "command": "spacelift.refresh", "when": "view == spacelift.stacks", "group": "navigation@3" }
+        {
+          "submenu": "spacelift.filterMenu",
+          "when": "view == spacelift.stacks",
+          "group": "navigation@1"
+        },
+        {
+          "submenu": "spacelift.sortMenu",
+          "when": "view == spacelift.stacks",
+          "group": "navigation@2"
+        },
+        {
+          "command": "spacelift.refresh",
+          "when": "view == spacelift.stacks",
+          "group": "navigation@3"
+        }
       ],
       "spacelift.filterMenu": [
-        { "command": "spacelift.filterAll", "group": "1_presets@1" },
-        { "command": "spacelift.filterApproval", "group": "1_presets@2" },
-        { "command": "spacelift.filterFailed", "group": "1_presets@3" },
-        { "command": "spacelift.filter", "group": "2_custom" }
+        {
+          "command": "spacelift.filterAll",
+          "group": "1_presets@1"
+        },
+        {
+          "command": "spacelift.filterApproval",
+          "group": "1_presets@2"
+        },
+        {
+          "command": "spacelift.filterFailed",
+          "group": "1_presets@3"
+        },
+        {
+          "command": "spacelift.filter",
+          "group": "2_custom"
+        }
       ],
       "spacelift.sortMenu": [
-        { "command": "spacelift.sortName", "group": "1_sort@1" },
-        { "command": "spacelift.sortAttention", "group": "1_sort@2" },
-        { "command": "spacelift.sortRecent", "group": "1_sort@3" }
+        {
+          "command": "spacelift.sortName",
+          "group": "1_sort@1"
+        },
+        {
+          "command": "spacelift.sortAttention",
+          "group": "1_sort@2"
+        },
+        {
+          "command": "spacelift.sortRecent",
+          "group": "1_sort@3"
+        }
       ],
       "view/item/context": [
-        { "command": "spacelift.confirm", "when": "viewItem =~ /confirmable/", "group": "inline@1" },
-        { "command": "spacelift.discard", "when": "viewItem =~ /discardable/", "group": "inline@2" },
-        { "command": "spacelift.openRun", "when": "viewItem =~ /run/", "group": "1_open" },
-        { "command": "spacelift.confirm", "when": "viewItem =~ /confirmable/", "group": "2_actions@1" },
-        { "command": "spacelift.discard", "when": "viewItem =~ /discardable/", "group": "2_actions@2" }
+        {
+          "command": "spacelift.confirm",
+          "when": "viewItem =~ /confirmable/",
+          "group": "inline@1"
+        },
+        {
+          "command": "spacelift.discard",
+          "when": "viewItem =~ /discardable/",
+          "group": "inline@2"
+        },
+        {
+          "command": "spacelift.openRun",
+          "when": "viewItem =~ /run/",
+          "group": "1_open"
+        },
+        {
+          "command": "spacelift.confirm",
+          "when": "viewItem =~ /confirmable/",
+          "group": "2_actions@1"
+        },
+        {
+          "command": "spacelift.discard",
+          "when": "viewItem =~ /discardable/",
+          "group": "2_actions@2"
+        },
+        {
+          "command": "spacelift.approve",
+          "when": "viewItem =~ /reviewable/",
+          "group": "inline@1"
+        },
+        {
+          "command": "spacelift.reject",
+          "when": "viewItem =~ /reviewable/",
+          "group": "inline@2"
+        },
+        {
+          "command": "spacelift.approve",
+          "when": "viewItem =~ /reviewable/",
+          "group": "2_actions@3"
+        },
+        {
+          "command": "spacelift.reject",
+          "when": "viewItem =~ /reviewable/",
+          "group": "2_actions@4"
+        }
       ]
     }
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
     "@types/vscode": "^1.100.0",
+    "@vitest/coverage-v8": "^5.1.1",
     "@vscode/vsce": "^4.1.1",
     "typescript": "^7.0.2",
     "vitest": "^5.1.1"
+  },
+  "overrides": {
+    "minimatch": "^11.0.9"
   }
 }

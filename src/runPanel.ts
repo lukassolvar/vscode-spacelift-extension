@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import * as vscode from "vscode";
 import type { GraphQLClient } from "./client";
 import { fetchLogs } from "./logs";
+import type { RunAction } from "./runs";
 import { esc, renderLog } from "./logRender";
 import {
   changesHtml, emptyLogMessage, entryKey, headerHtml, LOADING_HTML, needsLogFetch, pageHtml, stepsHtml,
@@ -11,7 +12,7 @@ import {
 const RUN_QUERY = `query($stack: ID!, $run: ID!) { runLogRetentionDays stack(id: $stack) {
   id name projectRoot terraformVersion spaceDetails { name }
   run(id: $run) {
-    id title state type branch triggeredBy createdAt canConfirm
+    id title state type branch triggeredBy createdAt canConfirm needsApproval
     commit { hash authorName message url timestamp }
     delta { addCount changeCount deleteCount }
     history { state hasLogs stateVersion timestamp until terminal }
@@ -24,7 +25,7 @@ const CHANGES_QUERY = `query($stack: ID!, $run: ID!) { stack(id: $stack) { run(i
 
 export interface PanelDeps {
   client: GraphQLClient;
-  act: (kind: "confirm" | "discard", stack: string, run: string) => Promise<void>;
+  act: (kind: RunAction, stack: string, run: string) => Promise<void>;
 }
 
 export class RunPanel {
@@ -102,6 +103,8 @@ export class RunPanel {
       }
       case "confirm":
       case "discard":
+      case "approve":
+      case "reject":
         await this.deps.act(m.cmd, this.stackId, this.runId);
         return this.render();
     }

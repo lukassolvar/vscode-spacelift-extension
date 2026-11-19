@@ -50,8 +50,19 @@ export async function browserLogin(binary: string, endpoint: string, signal: Abo
     });
   } catch (e) {
     const err = e as Error & { stderr?: string };
+    if (err.name === "AbortError") throw err;
     throw new Error(err.stderr?.trim().split("\n").pop() || err.message);
   }
+}
+
+const INSTALL_GUIDE_URL = "https://github.com/spacelift-io/spacectl";
+
+export type InstallAction = { label: string; command: string } | { label: string; url: string };
+
+export function installAction(platform: NodeJS.Platform): InstallAction {
+  if (platform === "darwin") return { label: "Install with Homebrew", command: "brew install spacelift-io/spacelift/spacectl" };
+  if (platform === "win32") return { label: "Install with winget", command: "winget install --id spacelift-io.spacectl" };
+  return { label: "Open Install Guide", url: INSTALL_GUIDE_URL };
 }
 
 export function aliasFromEndpoint(endpoint: string): string {

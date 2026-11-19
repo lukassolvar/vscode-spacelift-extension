@@ -1,10 +1,9 @@
 import * as vscode from "vscode";
 import { SpaceliftClient } from "./client";
 import { RunPanel } from "./runPanel";
+import { availableActions, mergeRuns, type Run, type RunAction } from "./runs";
 import { filterStacks, sortStacks, type SortMode, type Stack } from "./stacks";
-import { browserLogin, diagnose, spacectlExec, spacectlTokenProvider } from "./spacectl";
-
-interface Run { id: string; title: string; state: string; type: string; createdAt: number; canConfirm: boolean }
+import { browserLogin, diagnose, installAction, spacectlExec, spacectlTokenProvider } from "./spacectl";
 
 type Node =
   | { kind: "space"; name: string; stacks: Stack[] }
@@ -12,9 +11,11 @@ type Node =
   | { kind: "run"; stack: string; run: Run };
 
 const STACKS_QUERY = `query { stacks { id name state needsApproval stateSetAt spaceDetails { name } } }`;
-const RUNS_QUERY = `query($id: ID!) { stack(id: $id) { runs { id title state type createdAt canConfirm } } }`;
+const RUN_FIELDS = "id title state type createdAt canConfirm needsApproval";
+const RUNS_QUERY = `query($id: ID!) { stack(id: $id) { runs { ${RUN_FIELDS} } proposedRuns { ${RUN_FIELDS} } } }`;
 const CONFIRM = `mutation($stack: ID!, $run: ID!) { runConfirm(stack: $stack, run: $run) { id state } }`;
 const DISCARD = `mutation($stack: ID!, $run: ID!) { runDiscard(stack: $stack, run: $run) { id state } }`;
+const REVIEW = `mutation($stack: ID!, $run: ID!, $decision: RunReviewDecision!) { runReview(stack: $stack, run: $run, decision: $decision) { id decision } }`;
 
 const SORT_LABELS: Record<SortMode, string> = {
   name: "Name",
@@ -27,12 +28,12 @@ const IN_PROGRESS = new Set(["QUEUED", "INITIALIZING", "PREPARING", "PLANNING", 
 function icon(state: string): vscode.ThemeIcon {
   if (state === "FINISHED") return new vscode.ThemeIcon("pass", new vscode.ThemeColor("testing.iconPassed"));
   if (state === "FAILED") return new vscode.ThemeIcon("error", new vscode.ThemeColor("testing.iconFailed"));
-  if (state === "UNCONFIRMED") return new vscode.ThemeIcon("warning", new vscode.ThemeColor("list.warningForeground"));
+  if (state === "UNCONFIRMED" || state === "PENDING_REVIEW") return new vscode.ThemeIcon("warning", new vscode.ThemeColor("list.warningForeground"));
   if (IN_PROGRESS.has(state)) return new vscode.ThemeIcon("sync~spin");
   return new vscode.ThemeIcon("circle-outline");
 }
 
-class StacksProvider implements vscode.TreeDataProvider<Node> {
+export class StacksProvider implements vscode.TreeDataProvider<Node> {
   private changed = new vscode.EventEmitter<void>();
   readonly onDidChangeTreeData = this.changed.event;
 
@@ -58,8 +59,8 @@ class StacksProvider implements vscode.TreeDataProvider<Node> {
       }
       if (node.kind === "space") return node.stacks.map((stack) => ({ kind: "stack", stack }));
       if (node.kind === "stack") {
-        const data = await this.client.request<{ stack: { runs: Run[] } }>(RUNS_QUERY, { id: node.stack.id });
-        return data.stack.runs.map((run) => ({ kind: "run", stack: node.stack.id, run }));
+        const data = await this.client.request<{ stack: { runs: Run[]; proposedRuns: Run[] } }>(RUNS_QUERY, { id: node.stack.id });
+        return mergeRuns(data.stack.runs, data.stack.proposedRuns).map((run) => ({ kind: "run", stack: node.stack.id, run }));
       }
       return [];
     } catch (e) {
@@ -88,10 +89,11 @@ class StacksProvider implements vscode.TreeDataProvider<Node> {
     }
     const { run } = node;
     const item = new vscode.TreeItem(run.title, vscode.TreeItemCollapsibleState.None);
-    item.description = `${run.state} · ${new Date(run.createdAt * 1000).toLocaleString()}`;
+    item.description = [run.state, run.type === "PROPOSED" && "PROPOSED", new Date(run.createdAt * 1000).toLocaleString()].filter(Boolean).join(" · ");
     item.tooltip = `${run.id} (${run.type})`;
     item.iconPath = icon(run.state);
-    item.contextValue = ["run", run.canConfirm && "confirmable", run.state === "UNCONFIRMED" && "discardable"].filter(Boolean).join(" ");
+    const can = availableActions(run);
+    item.contextValue = ["run", can.confirm && "confirmable", can.discard && "discardable", can.review && "reviewable"].filter(Boolean).join(" ");
     item.command = { command: "spacelift.openRun", title: "Open Run", arguments: [node] };
     return item;
   }
@@ -140,17 +142,19 @@ export function activate(context: vscode.ExtensionContext) {
         return;
       }
       if (status === "no-spacectl") {
+        const install = installAction(process.platform);
         const pick = await vscode.window.showInformationMessage(
           "spacectl was not found. Spacelift needs it for authentication.",
-          "Install with Homebrew",
+          install.label,
           "Set Path",
         );
         if (pick === "Set Path") {
           await vscode.commands.executeCommand("workbench.action.openSettings", "spacelift.spacectlPath");
           return;
         }
-        if (pick !== "Install with Homebrew") return;
-        runInTerminal("brew install spacelift-io/spacelift/spacectl");
+        if (pick !== install.label) return;
+        if ("url" in install) await vscode.env.openExternal(vscode.Uri.parse(install.url));
+        else runInTerminal(install.command);
       } else if (status === "not-logged-in") {
         const pick = await vscode.window.showInformationMessage(
           "Sign in to Spacelift. Your browser will open to finish the login.",
@@ -182,7 +186,10 @@ export function activate(context: vscode.ExtensionContext) {
         await config().update("endpoint", endpoint.trim().replace(/\/$/, ""), vscode.ConfigurationTarget.Global);
         continue;
       }
-      const next = await vscode.window.showInformationMessage("Continue setup once that has finished.", "Continue");
+      const next = await vscode.window.showInformationMessage(
+        "Continue setup once the install has finished. If spacectl is still not found, restart VS Code so it sees the updated PATH.",
+        "Continue",
+      );
       if (next !== "Continue") return;
     }
   };
@@ -193,16 +200,21 @@ export function activate(context: vscode.ExtensionContext) {
     }
   });
 
-  const act = async (kind: "confirm" | "discard", stack: string, run: string) => {
+  const act = async (kind: RunAction, stack: string, run: string) => {
+    const [query, variables]: [string, Record<string, unknown>] =
+      kind === "confirm" ? [CONFIRM, { stack, run }]
+      : kind === "discard" ? [DISCARD, { stack, run }]
+      : [REVIEW, { stack, run, decision: kind === "approve" ? "APPROVE" : "REJECT" }];
+    const done = { confirm: "approved", discard: "discarded", approve: "approved review of", reject: "rejected" }[kind];
     try {
-      await client.request(kind === "confirm" ? CONFIRM : DISCARD, { stack, run });
-      vscode.window.setStatusBarMessage(`Spacelift: ${kind === "confirm" ? "approved" : "discarded"} ${run}`, 4000);
+      await client.request(query, variables);
+      vscode.window.setStatusBarMessage(`Spacelift: ${done} ${run}`, 4000);
     } catch (e) {
       vscode.window.showErrorMessage(`Spacelift: ${(e as Error).message}`);
     }
     stacks.refresh();
   };
-  const mutate = (kind: "confirm" | "discard") => (node: Node) => (node?.kind === "run" ? act(kind, node.stack, node.run.id) : undefined);
+  const mutate = (kind: RunAction) => (node: Node) => (node?.kind === "run" ? act(kind, node.stack, node.run.id) : undefined);
 
   const timer = setInterval(() => stacks.refresh(), 30_000);
   context.subscriptions.push(
@@ -217,7 +229,7 @@ export function activate(context: vscode.ExtensionContext) {
       if (text !== undefined) applyView(text.trim(), stacks.sort);
     }),
     vscode.commands.registerCommand("spacelift.filterAll", () => applyView("", stacks.sort)),
-    vscode.commands.registerCommand("spacelift.filterApproval", () => applyView("unconfirmed", stacks.sort)),
+    vscode.commands.registerCommand("spacelift.filterApproval", () => applyView("needs-approval", stacks.sort)),
     vscode.commands.registerCommand("spacelift.filterFailed", () => applyView("failed", stacks.sort)),
     vscode.commands.registerCommand("spacelift.sortName", () => applyView(stacks.filter, "name")),
     vscode.commands.registerCommand("spacelift.sortAttention", () => applyView(stacks.filter, "attention")),
@@ -227,6 +239,8 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand("spacelift.openRun", (n: Node) => n?.kind === "run" && RunPanel.show({ client, act }, n.stack, n.run.id)),
     vscode.commands.registerCommand("spacelift.confirm", mutate("confirm")),
     vscode.commands.registerCommand("spacelift.discard", mutate("discard")),
+    vscode.commands.registerCommand("spacelift.approve", mutate("approve")),
+    vscode.commands.registerCommand("spacelift.reject", mutate("reject")),
     vscode.workspace.onDidChangeConfiguration((e) => e.affectsConfiguration("spacelift") && stacks.refresh()),
   );
 }

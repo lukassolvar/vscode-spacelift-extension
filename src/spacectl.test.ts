@@ -1,5 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { aliasFromEndpoint, diagnose } from "./spacectl";
+import { aliasFromEndpoint, diagnose, installAction } from "./spacectl";
+
+describe("installAction", () => {
+  it("installs with Homebrew on macOS and winget on Windows", () => {
+    expect(installAction("darwin")).toMatchObject({ command: "brew install spacelift-io/spacelift/spacectl" });
+    expect(installAction("win32")).toMatchObject({ command: "winget install --id spacelift-io.spacectl" });
+  });
+
+  it("falls back to the install guide where no single command fits", () => {
+    expect(installAction("linux")).toMatchObject({ url: "https://github.com/spacelift-io/spacectl" });
+  });
+});
 
 describe("aliasFromEndpoint", () => {
   it("uses the account subdomain as the profile alias", () => {

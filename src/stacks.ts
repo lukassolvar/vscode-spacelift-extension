@@ -13,7 +13,7 @@ export function filterStacks(stacks: Stack[], text: string): Stack[] {
   const terms = text.toLowerCase().split(/\s+/).filter(Boolean);
   if (!terms.length) return stacks;
   return stacks.filter((s) => {
-    const haystack = `${s.name} ${s.state} ${s.spaceDetails.name}`.toLowerCase();
+    const haystack = `${s.name} ${s.state} ${s.spaceDetails.name} ${s.needsApproval ? "needs-approval" : ""}`.toLowerCase();
     return terms.every((t) => haystack.includes(t));
   });
 }

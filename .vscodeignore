@@ -1,8 +1,12 @@
 node_modules
 src
+test
+coverage
 .vscode
 media/*
 !media/icon.png
 .gitignore
 tsconfig.json
+vitest.config.mts
 **/*.test.ts
+SECURITY.md

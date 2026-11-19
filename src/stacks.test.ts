@@ -20,6 +20,12 @@ describe("filterStacks", () => {
     expect(filterStacks(stacks, "acme-dev").map((s) => s.id)).toEqual(["dev-api"]);
   });
 
+  it("matches the needs-approval token only for stacks with a run awaiting approval", () => {
+    const withApproval = [...stacks, stack("pending", "FINISHED", { needsApproval: true })];
+
+    expect(filterStacks(withApproval, "needs-approval").map((s) => s.id)).toEqual(["pending"]);
+  });
+
   it("requires every whitespace-separated term to match", () => {
     expect(filterStacks(stacks, "api prod").map((s) => s.id)).toEqual(["api"]);
   });
