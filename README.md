@@ -4,6 +4,8 @@ Browse your [Spacelift](https://spacelift.io) stacks and runs, read plan and app
 
 > **Unofficial community project.** Not affiliated with, endorsed by, or supported by Spacelift, Inc. See [Disclaimer](#disclaimer).
 
+![Stacks view in the sidebar, grouped by space and sorted by "Needs attention first"](media/sidebar.png)
+
 ![Run details panel](media/run-panel.png)
 
 ## Features
