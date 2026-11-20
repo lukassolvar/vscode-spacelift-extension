@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { SpaceliftClient } from "./client";
+import { InlineStatus } from "./inline";
 import { RunPanel } from "./runPanel";
 import { availableActions, mergeRuns, type Run, type RunAction } from "./runs";
 import { filterStacks, sortStacks, type SortMode, type Stack } from "./stacks";
@@ -214,12 +215,27 @@ export function activate(context: vscode.ExtensionContext) {
     }
     stacks.refresh();
   };
+  const inline = new InlineStatus(client, () => config().get<boolean>("inlineStatus", true));
+  const refreshAll = () => {
+    stacks.refresh();
+    inline.refresh();
+  };
+  const inlineAction = async (kind: RunAction, stack: string, run: string, name: string) => {
+    const label = { confirm: "Approve", discard: "Discard", approve: "Approve review", reject: "Reject" }[kind];
+    const pick = await vscode.window.showWarningMessage(`${label} run ${run} on ${name}?`, { modal: true }, label);
+    if (pick !== label) return;
+    await act(kind, stack, run);
+    inline.refresh();
+  };
   const mutate = (kind: RunAction) => (node: Node) => (node?.kind === "run" ? act(kind, node.stack, node.run.id) : undefined);
 
-  const timer = setInterval(() => stacks.refresh(), 30_000);
+  const timer = setInterval(refreshAll, 30_000);
   context.subscriptions.push(
     { dispose: () => clearInterval(timer) },
     treeView,
+    vscode.languages.registerCodeLensProvider({ pattern: "**/*.tf" }, inline),
+    vscode.languages.registerHoverProvider({ pattern: "**/*.tf" }, inline),
+    vscode.commands.registerCommand("spacelift.inlineAction", inlineAction),
     vscode.commands.registerCommand("spacelift.filter", async () => {
       const text = await vscode.window.showInputBox({
         title: "Filter stacks",
@@ -234,14 +250,14 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand("spacelift.sortName", () => applyView(stacks.filter, "name")),
     vscode.commands.registerCommand("spacelift.sortAttention", () => applyView(stacks.filter, "attention")),
     vscode.commands.registerCommand("spacelift.sortRecent", () => applyView(stacks.filter, "recent")),
-    vscode.commands.registerCommand("spacelift.refresh", () => stacks.refresh()),
+    vscode.commands.registerCommand("spacelift.refresh", refreshAll),
     vscode.commands.registerCommand("spacelift.setup", setup),
     vscode.commands.registerCommand("spacelift.openRun", (n: Node) => n?.kind === "run" && RunPanel.show({ client, act }, n.stack, n.run.id)),
     vscode.commands.registerCommand("spacelift.confirm", mutate("confirm")),
     vscode.commands.registerCommand("spacelift.discard", mutate("discard")),
     vscode.commands.registerCommand("spacelift.approve", mutate("approve")),
     vscode.commands.registerCommand("spacelift.reject", mutate("reject")),
-    vscode.workspace.onDidChangeConfiguration((e) => e.affectsConfiguration("spacelift") && stacks.refresh()),
+    vscode.workspace.onDidChangeConfiguration((e) => e.affectsConfiguration("spacelift") && refreshAll()),
   );
 }
 

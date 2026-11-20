@@ -32,6 +32,25 @@ export class TreeItem {
   constructor(public label: string, public collapsibleState?: number) {}
 }
 
+export class Range {
+  constructor(public startLine: number, public startCharacter: number, public endLine: number, public endCharacter: number) {}
+}
+
+export class CodeLens {
+  constructor(public range: Range, public command?: { title: string; command: string; arguments?: unknown[] }) {}
+}
+
+export class MarkdownString {
+  isTrusted?: boolean | { enabledCommands: string[] };
+  supportThemeIcons?: boolean;
+  supportHtml?: boolean;
+  constructor(public value = "") {}
+}
+
+export class Hover {
+  constructor(public contents: MarkdownString) {}
+}
+
 export const ViewColumn = { Active: -1 };
 export const ProgressLocation = { Notification: 15 };
 export const ConfigurationTarget = { Global: 1 };
@@ -93,6 +112,7 @@ export const window = {
     return panel;
   }),
   showErrorMessage: vi.fn(),
+  showWarningMessage: vi.fn(async (..._args: unknown[]): Promise<string | undefined> => undefined),
   showInformationMessage: vi.fn(async (..._args: unknown[]): Promise<string | undefined> => undefined),
   showInputBox: vi.fn(async (_options?: unknown): Promise<string | undefined> => undefined),
   createTerminal: vi.fn(() => ({ show: vi.fn(), sendText: vi.fn() })),
@@ -113,6 +133,11 @@ export const workspace = {
     update: configUpdate,
   }),
   onDidChangeConfiguration: vi.fn(() => ({ dispose: () => undefined })),
+};
+
+export const languages = {
+  registerCodeLensProvider: vi.fn(() => ({ dispose: () => undefined })),
+  registerHoverProvider: vi.fn(() => ({ dispose: () => undefined })),
 };
 
 export const commands = {

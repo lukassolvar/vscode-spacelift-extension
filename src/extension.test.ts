@@ -268,6 +268,28 @@ describe("activate", () => {
       expect(fetch).not.toHaveBeenCalled();
     });
 
+    it("asks before approving from the editor and does nothing when the user backs out", async () => {
+      activate(context as never);
+
+      await command("spacelift.inlineAction")("confirm", "s1", "r1", "acme/s1");
+      expect(fetch).not.toHaveBeenCalled();
+
+      vi.mocked(vscode.window.showWarningMessage).mockResolvedValueOnce("Approve");
+      await command("spacelift.inlineAction")("confirm", "s1", "r1", "acme/s1");
+      expect(lastRequest().query).toContain("runConfirm");
+    });
+
+    it("refreshes the inline editor status when the user hits Refresh", async () => {
+      activate(context as never);
+      const provider = vi.mocked(vscode.languages.registerCodeLensProvider).mock.calls.at(-1)![1] as any;
+      const changed = vi.fn();
+      provider.onDidChangeCodeLenses(changed);
+
+      await command("spacelift.refresh")();
+
+      expect(changed).toHaveBeenCalled();
+    });
+
     it("opens the run details panel for a run", () => {
       activate(context as never);
 

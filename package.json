@@ -3,7 +3,7 @@
   "displayName": "Stacks for Spacelift (Unofficial)",
   "icon": "media/icon.png",
   "description": "Unofficial. Browse Spacelift stacks and runs, read plan and apply logs, and approve or discard runs from VS Code.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "lukassolvar",
   "license": "MIT",
   "repository": {
@@ -40,6 +40,9 @@
       "description": "Needs the local spacectl binary."
     }
   },
+  "activationEvents": [
+    "workspaceContains:**/*.tf"
+  ],
   "main": "./out/extension.js",
   "scripts": {
     "build": "tsc -p .",
@@ -86,6 +89,11 @@
           "default": "spacectl",
           "scope": "machine",
           "description": "Path to the spacectl binary used to obtain the token (spacectl profile export-token). User setting only, workspaces cannot override it."
+        },
+        "spacelift.inlineStatus": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show stack status, last change and approve/discard actions above spacelift_stack resources in .tf files."
         }
       }
     },
