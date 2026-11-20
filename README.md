@@ -8,6 +8,8 @@ Browse your [Spacelift](https://spacelift.io) stacks and runs, read plan and app
 
 ![Run details panel](media/run-panel.png)
 
+![Inline status and hover card above a spacelift_stack resource](media/inline-status.png)
+
 ## Features
 
 - **Stacks view** in the activity bar, grouped by space, with live state icons. Stacks waiting for approval are flagged.
@@ -17,6 +19,7 @@ Browse your [Spacelift](https://spacelift.io) stacks and runs, read plan and app
 - **Approve and Discard** for runs waiting for confirmation, from the panel or the run's context menu.
 - **Approve and Reject reviews** for runs that need sign-off from an approval policy, including proposed (pull request) runs in `PENDING_REVIEW`. Proposed runs only appear in the tree while they await review.
 - Logs and status refresh automatically while a run is in progress.
+- **Inline status in `.tf` files.** Above each `resource "spacelift_stack"` block, a line shows the stack's state (applied, needs attention, failed, on hold, in progress), when it last changed, and who approved or triggered it. Click it to open the run. When a run is waiting, small **Approve** and **Discard** buttons appear next to it. Hover the `resource` line for a card with the run, commit, change counts, history and the same actions.
 
 ## Requirements
 
@@ -51,8 +54,9 @@ The setup checks each step in order and offers to install `spacectl` if it is mi
 | --- | --- | --- |
 | `spacelift.endpoint` | empty | Your Spacelift account URL. Must be `https://`. |
 | `spacelift.spacectlPath` | `spacectl` | Path to the `spacectl` binary. |
+| `spacelift.inlineStatus` | `true` | Show stack status and actions above `spacelift_stack` resources in `.tf` files. |
 
-Both are user-level settings. Workspace settings cannot override them (see Security).
+`spacelift.endpoint` and `spacelift.spacectlPath` are user-level settings. Workspace settings cannot override them (see Security).
 
 ## Security
 
@@ -60,9 +64,10 @@ Both are user-level settings. Workspace settings cannot override them (see Secur
 - `spacelift.endpoint` and `spacelift.spacectlPath` use VS Code's machine scope, so a repository you open cannot redirect your token or choose which program runs.
 - No telemetry. The only network traffic is to your Spacelift account.
 - Log text, run titles and commit messages are escaped before display, and the run panel uses a strict Content Security Policy.
+- Links in the inline hover card can only run the extension's own commands (open run, approve, discard). Text from your repository, such as commit messages, is escaped so it cannot add links of its own.
 
 To report a vulnerability, see [SECURITY.md](SECURITY.md).
-- Approve and Discard act immediately and do not ask for confirmation, matching the Spacelift web app.
+- Approve and Discard in the sidebar and run panel act immediately, matching the Spacelift web app. In the editor they ask for confirmation first, because a button between lines of code is easy to click by accident.
 
 ## Known limitations
 
@@ -70,6 +75,9 @@ To report a vulnerability, see [SECURITY.md](SECURITY.md).
 - Reviews are submitted with Spacelift's `runReview` API. Whether you are allowed to review a run is decided by Spacelift and your role, so a refused review shows Spacelift's message.
 - The Changes tab needs a Terraform, OpenTofu or Terragrunt stack.
 - The extension runs locally, not in remote or virtual workspaces, because it relies on your local `spacectl` login.
+- Inline status matches a block to a stack by its literal `name`. A name built from variables, such as `"${local.env}/app"`, shows a note instead of a status.
+- VS Code only allows plain text in the tooltip of the line above a block, so colors and action links live in the hover card on the `resource` line.
+- The extension starts in any workspace that contains `.tf` files, so the inline status is ready when you open one.
 
 ## Development
 
