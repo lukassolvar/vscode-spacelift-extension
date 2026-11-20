@@ -13,3 +13,4 @@ tsconfig.json
 vitest.config.mts
 **/*.test.ts
 SECURITY.md
+release-notes.md
